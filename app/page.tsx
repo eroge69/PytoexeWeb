@@ -397,6 +397,20 @@ export default function PyToExeConverter() {
       <p className="mt-8 text-center text-sm text-muted-foreground">
         This tool uploads Python files to your GitHub repository and converts them to executable files.
       </p>
+
+      <p></p>
+      
+      <p className="mt-8 text-center text-sm text-muted-foreground">
+        The file is uploaded to <a href="https://github.com/eroge69/PyToExe/tree/main/python-files" target="_blank"><b> THIS REPOSITORY</b></a>
+      </p>
+
+      <p></p>
+
+      <p className="mt-8 text-center text-sm text-muted-foreground">
+        <a href="https://github.com/eroge69/" target="_blank"><b> UNAMED666</b></a>
+
+
+      </p>
     </div>
   )
 }
