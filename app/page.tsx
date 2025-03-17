@@ -395,7 +395,7 @@ export default function PyToExeConverter() {
       </Card>
 
       <p className="mt-8 text-center text-sm text-muted-foreground">
-        This tool uploads Python files to your GitHub repository and converts them to executable files.
+        This tool uploads Python files to GitHub repository and converts them to executable files.
       </p>
 
       <p></p>
