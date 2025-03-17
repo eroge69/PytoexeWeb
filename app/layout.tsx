@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: "PY to EXE Converter",
-  description: "Convert python file to executable file",
+  description: "Convert PY to EXE with Online Web Generator",
     generator: 'v0.dev'
 }
 
