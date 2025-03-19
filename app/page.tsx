@@ -404,7 +404,7 @@ export default function PyToExeConverter() {
 
           <div className="flex flex-col items-center">
             <h1 className="text-3xl font-bold text-center">PY to EXE
-            <br>Online Converter</br>
+            Online Converter
             </h1>
             <div className="relative w-24 h-24 mt-2 mb-4">
               <Image src="/Python-Symbol.png" alt="Python Logo" fill className="object-contain" priority />
