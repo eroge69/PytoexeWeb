@@ -391,9 +391,6 @@ export default function PyToExeConverter() {
           )}
 
           <h1 className="text-3xl font-bold text-center">PY to EXE</h1>
-          <p align="center">
-  <img width="200" height="200" src="https://github.com/user-attachments/assets/fdb7b73f-3537-44e0-9d9e-daff5a9cbead">
-</p>
 
           <div className="w-full">
             <div className="flex items-center justify-center w-full">
