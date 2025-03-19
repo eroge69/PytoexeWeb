@@ -6,7 +6,19 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Upload, Github, Loader2, Download, CheckCircle, XCircle, Clock, RefreshCw, Trash2 } from "lucide-react"
+import {
+  Upload,
+  Github,
+  Loader2,
+  Download,
+  CheckCircle,
+  XCircle,
+  Clock,
+  RefreshCw,
+  Trash2,
+  Code,
+  Shield,
+} from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import {
@@ -492,6 +504,37 @@ export default function PyToExeConverter() {
         </div>
       </Card>
 
+      {/* Security Information */}
+      <div className="mt-6 w-full max-w-md p-4 border rounded-md bg-muted/30">
+        <div className="flex items-center gap-2 mb-2">
+          <Shield className="h-5 w-5 text-green-500" />
+          <h3 className="font-medium">Security Information</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mb-3">
+          For users concerned about security, you can review our source code in both repositories:
+        </p>
+        <div className="space-y-2">
+          <a
+            href="https://github.com/eroge69/PytoexeWeb"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-sm text-primary hover:underline"
+          >
+            <Code className="h-4 w-4" />
+            Web Interface Repository
+          </a>
+          <a
+            href="https://github.com/eroge69/PyToExe"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-sm text-primary hover:underline"
+          >
+            <Github className="h-4 w-4" />
+            Python-to-EXE Processing Repository
+          </a>
+        </div>
+      </div>
+
       {/* SEO-friendly content section */}
       <div className="mt-8 max-w-2xl text-center">
         <h2 className="text-xl font-semibold mb-4">Convert Python to EXE Online - Free and Easy</h2>
@@ -517,23 +560,46 @@ export default function PyToExeConverter() {
             <li>Fast conversion time</li>
             <li>No installation needed - works in your browser</li>
             <li>Creates standalone executable files</li>
+            <li>Open source - code available for review</li>
           </ul>
         </div>
       </div>
 
       <p className="mt-8 text-center text-sm text-muted-foreground">
-        This tool uploads Python files to your GitHub repository and converts them to executable files.
-      </p>
-
-      <p className="mt-8 text-center text-sm text-muted-foreground">
-        The file will be uploaded to{" "}
+        Your Python files will be uploaded to the{" "}
         <a href="https://github.com/eroge69/PyToExe/tree/main/python-files" target="_blank" rel="noopener noreferrer">
-          <b> THIS REPOSITORY</b>
-        </a>
+          <b>PyToExe repository</b>
+        </a>{" "}
+        where they will be processed by GitHub Actions to create executable files.
       </p>
 
       <footer className="mt-12 mb-6 text-center text-xs text-muted-foreground">
         <p>© {new Date().getFullYear()} PY to EXE Online Generator. All rights reserved.</p>
+        <div className="mt-2 flex flex-col items-center gap-2">
+          <div className="flex gap-4">
+            <a
+              href="https://github.com/eroge69/PytoexeWeb"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              Web Interface Source
+            </a>
+            <span>•</span>
+            <a
+              href="https://github.com/eroge69/PyToExe"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              Converter Source
+            </a>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            This application uses two repositories: one for the web interface and one for the Python-to-EXE conversion
+            process.
+          </p>
+        </div>
       </footer>
     </div>
   )
