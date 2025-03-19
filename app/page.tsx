@@ -403,7 +403,9 @@ export default function PyToExeConverter() {
           )}
 
           <div className="flex flex-col items-center">
-            <h1 className="text-3xl font-bold text-center">PY to EXE</h1>
+            <h1 className="text-3xl font-bold text-center">PY to EXE
+            <br>Online Converter</br>
+            </h1>
             <div className="relative w-24 h-24 mt-2 mb-4">
               <Image src="/Python-Symbol.png" alt="Python Logo" fill className="object-contain" priority />
             </div>
@@ -574,7 +576,7 @@ export default function PyToExeConverter() {
       </p>
 
       <footer className="mt-12 mb-6 text-center text-xs text-muted-foreground">
-        <p>© {new Date().getFullYear()} PY to EXE Online Generator. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} PY to EXE Online Converter. All rights reserved.</p>
         <div className="mt-2 flex flex-col items-center gap-2">
           <div className="flex gap-4">
             <a
