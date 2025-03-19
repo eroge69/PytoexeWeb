@@ -390,7 +390,7 @@ export default function PyToExeConverter() {
             </div>
           )}
 
-           <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center">
             <h1 className="text-3xl font-bold text-center">PY to EXE</h1>
             <div className="relative w-24 h-24 mt-2 mb-4">
               <Image src="/Python-Symbol.png" alt="Python Logo" fill className="object-contain" priority />
@@ -492,6 +492,35 @@ export default function PyToExeConverter() {
         </div>
       </Card>
 
+      {/* SEO-friendly content section */}
+      <div className="mt-8 max-w-2xl text-center">
+        <h2 className="text-xl font-semibold mb-4">Convert Python to EXE Online - Free and Easy</h2>
+        <div className="text-sm text-muted-foreground space-y-4">
+          <p>
+            PY to EXE is a free online tool that converts Python (.py) files to executable (.exe) files. No installation
+            required - just upload your Python script and download the executable file.
+          </p>
+          <p>
+            Our online Python to EXE converter is perfect for developers who want to distribute their Python
+            applications to users who don't have Python installed. The generated executable files work on Windows
+            without requiring any additional dependencies.
+          </p>
+          <p>
+            Simply upload your Python file, wait for the conversion process to complete, and download your executable
+            file. It's that easy!
+          </p>
+          <h3 className="text-lg font-medium mt-6 mb-2">Features of our Python to EXE Converter</h3>
+          <ul className="list-disc list-inside text-left mx-auto max-w-md">
+            <li>Free to use - no registration required</li>
+            <li>Secure conversion process</li>
+            <li>Works with all Python versions</li>
+            <li>Fast conversion time</li>
+            <li>No installation needed - works in your browser</li>
+            <li>Creates standalone executable files</li>
+          </ul>
+        </div>
+      </div>
+
       <p className="mt-8 text-center text-sm text-muted-foreground">
         This tool uploads Python files to your GitHub repository and converts them to executable files.
       </p>
@@ -503,7 +532,9 @@ export default function PyToExeConverter() {
         </a>
       </p>
 
-     
+      <footer className="mt-12 mb-6 text-center text-xs text-muted-foreground">
+        <p>© {new Date().getFullYear()} PY to EXE Online Generator. All rights reserved.</p>
+      </footer>
     </div>
   )
 }
