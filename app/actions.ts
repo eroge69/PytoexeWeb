@@ -162,6 +162,67 @@ export async function uploadFileToGithub(fileContent: string, fileName: string) 
   }
 }
 
+// Function to delete file from GitHub
+export async function deleteFileFromGithub(fileName: string) {
+  const token = process.env.GITHUB_TOKEN
+  const username = process.env.GITHUB_USERNAME
+  const repo = process.env.GITHUB_REPO
+  const path = `python-files/${fileName}`
+
+  if (!token || !username || !repo) {
+    throw new Error("Missing required environment variables")
+  }
+
+  try {
+    // First, we need to get the file's SHA
+    const getFileResponse = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: "application/vnd.github.v3+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    })
+
+    if (!getFileResponse.ok) {
+      if (getFileResponse.status === 404) {
+        console.log(`File ${fileName} not found, nothing to delete`)
+        return { success: true, message: "File not found, nothing to delete" }
+      }
+      throw new Error(`Failed to get file information: ${getFileResponse.statusText}`)
+    }
+
+    const fileData = await getFileResponse.json()
+    const sha = fileData.sha
+
+    // Now delete the file
+    const deleteResponse = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      body: JSON.stringify({
+        message: `Delete ${fileName} after successful workflow completion`,
+        sha: sha,
+      }),
+    })
+
+    if (!deleteResponse.ok) {
+      const errorText = await deleteResponse.text()
+      console.error(`Error deleting file: ${deleteResponse.status}`)
+      console.error(`Response: ${errorText}`)
+      throw new Error(`Failed to delete file: ${deleteResponse.statusText}`)
+    }
+
+    return { success: true, message: `Successfully deleted ${fileName} from repository` }
+  } catch (error) {
+    console.error("Error deleting file from GitHub:", error)
+    throw error
+  }
+}
+
 // Function to check workflow status
 export async function checkWorkflowStatus(workflowRunId: number) {
   const token = process.env.GITHUB_TOKEN
@@ -306,6 +367,36 @@ export async function getArtifactDownloadUrl(artifactId: number) {
     }
   } catch (error) {
     console.error("Error getting artifact download:", error)
+    throw error
+  }
+}
+
+// Function to get GitHub user information
+export async function getGitHubUserInfo(username: string) {
+  const token = process.env.GITHUB_TOKEN
+
+  try {
+    const response = await fetch(`https://api.github.com/users/${username}`, {
+      headers: {
+        ...(token && { Authorization: `token ${token}` }),
+        Accept: "application/vnd.github.v3+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to get user information: ${response.statusText}`)
+    }
+
+    const userData = await response.json()
+    return {
+      success: true,
+      name: userData.name || userData.login,
+      avatar_url: userData.avatar_url,
+      html_url: userData.html_url,
+    }
+  } catch (error) {
+    console.error("Error getting GitHub user info:", error)
     throw error
   }
 }

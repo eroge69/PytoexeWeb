@@ -2,10 +2,11 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Upload, Github, Loader2, Download, CheckCircle, XCircle, Clock, RefreshCw } from "lucide-react"
+import { Upload, Github, Loader2, Download, CheckCircle, XCircle, Clock, RefreshCw, Trash2 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import {
@@ -14,21 +15,26 @@ import {
   checkWorkflowStatus,
   getWorkflowArtifacts,
   getArtifactDownloadUrl,
+  deleteFileFromGithub,
+  getGitHubUserInfo,
 } from "./actions"
 
 // Workflow status component
 function WorkflowStatus({
   workflowId,
   onComplete,
+  fileName,
 }: {
   workflowId: number
   onComplete: (artifacts: any[]) => void
+  fileName: string
 }) {
   const [status, setStatus] = useState<string>("pending")
   const [progress, setProgress] = useState<number>(0)
   const [conclusion, setConclusion] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState<boolean>(false)
+  const [fileDeleted, setFileDeleted] = useState<boolean>(false)
 
   // Poll for workflow status updates
   useEffect(() => {
@@ -51,6 +57,17 @@ function WorkflowStatus({
           if (workflowData.conclusion === "success") {
             const artifacts = await getWorkflowArtifacts(workflowId)
             onComplete(artifacts)
+
+            // Delete the Python file after successful workflow
+            if (!fileDeleted && fileName) {
+              try {
+                await deleteFileFromGithub(fileName)
+                setFileDeleted(true)
+                console.log(`Successfully deleted ${fileName}`)
+              } catch (error) {
+                console.error(`Error deleting file ${fileName}:`, error)
+              }
+            }
           }
 
           // Clear interval when completed
@@ -85,7 +102,7 @@ function WorkflowStatus({
 
     // Clean up interval on unmount
     return () => clearInterval(intervalId)
-  }, [workflowId, onComplete])
+  }, [workflowId, onComplete, fileName, fileDeleted])
 
   // Status indicator
   const getStatusIndicator = () => {
@@ -124,6 +141,17 @@ function WorkflowStatus({
       if (workflowData.status === "completed" && workflowData.conclusion === "success") {
         const artifacts = await getWorkflowArtifacts(workflowId!)
         onComplete(artifacts)
+
+        // Delete the Python file after successful workflow
+        if (!fileDeleted && fileName) {
+          try {
+            await deleteFileFromGithub(fileName)
+            setFileDeleted(true)
+            console.log(`Successfully deleted ${fileName}`)
+          } catch (error) {
+            console.error(`Error deleting file ${fileName}:`, error)
+          }
+        }
       }
     } catch (error) {
       console.error("Error refreshing workflow status:", error)
@@ -147,7 +175,15 @@ function WorkflowStatus({
 
       <Progress value={progress} className="h-2 mb-2" />
 
-      <div className="text-xs text-muted-foreground">Workflow ID: {workflowId}</div>
+      <div className="flex justify-between items-center">
+        <div className="text-xs text-muted-foreground">Workflow ID: {workflowId}</div>
+        {fileDeleted && (
+          <div className="text-xs flex items-center text-green-500">
+            <Trash2 className="h-3 w-3 mr-1" />
+            Python file deleted
+          </div>
+        )}
+      </div>
 
       {error && <div className="mt-2 text-xs text-red-500">{error}</div>}
     </div>
@@ -157,12 +193,30 @@ function WorkflowStatus({
 export default function PyToExeConverter() {
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [message, setMessage] = useState<{ type: "success" | "error"; title: string; text: string } | null>(null)
+  const [message, setMessage] = useState<{ type: "success" | "error" | "info"; title: string; text: string } | null>(
+    null,
+  )
   const [workflowId, setWorkflowId] = useState<number | null>(null)
   const [artifacts, setArtifacts] = useState<any[]>([])
   const [authToken, setAuthToken] = useState<string>("")
   const [processingStep, setProcessingStep] = useState<string>("idle")
   const [downloading, setDownloading] = useState<boolean>(false)
+  const [uploadedFileName, setUploadedFileName] = useState<string>("")
+  const [userInfo, setUserInfo] = useState<any>(null)
+
+  // Fetch GitHub user info on component mount
+  useEffect(() => {
+    async function fetchUserInfo() {
+      try {
+        const info = await getGitHubUserInfo("eroge69")
+        setUserInfo(info)
+      } catch (error) {
+        console.error("Error fetching user info:", error)
+      }
+    }
+
+    fetchUserInfo()
+  }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -174,6 +228,7 @@ export default function PyToExeConverter() {
         setWorkflowId(null)
         setArtifacts([])
         setProcessingStep("idle")
+        setUploadedFileName("")
       } else {
         setFile(null)
         setMessage({
@@ -202,6 +257,9 @@ export default function PyToExeConverter() {
     try {
       // Read file content
       const content = await file.text()
+
+      // Save the file name for later deletion
+      setUploadedFileName(file.name)
 
       // Call the server action to upload file
       const result = await uploadFileToGithub(content, file.name)
@@ -307,6 +365,31 @@ export default function PyToExeConverter() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md p-6">
         <div className="flex flex-col items-center space-y-6">
+          {/* GitHub User Info */}
+          {userInfo && (
+            <div className="flex items-center self-start mb-2">
+              <div className="relative h-10 w-10 overflow-hidden rounded-full mr-3">
+                <Image
+                  src={userInfo.avatar_url || "/placeholder.svg"}
+                  alt={userInfo.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div>
+                <h2 className="text-sm font-medium">{userInfo.name}</h2>
+                <a
+                  href={userInfo.html_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground hover:underline"
+                >
+                  @{userInfo.html_url.split("/").pop()}
+                </a>
+              </div>
+            </div>
+          )}
+
           <h1 className="text-3xl font-bold text-center">PY to EXE</h1>
 
           <div className="w-full">
@@ -358,14 +441,24 @@ export default function PyToExeConverter() {
           </Button>
 
           {message && (
-            <Alert className={message.type === "error" ? "border-destructive" : "border-success"}>
+            <Alert
+              className={
+                message.type === "error"
+                  ? "border-destructive"
+                  : message.type === "info"
+                    ? "border-blue-500"
+                    : "border-success"
+              }
+            >
               <AlertTitle>{message.title}</AlertTitle>
               <AlertDescription>{message.text}</AlertDescription>
             </Alert>
           )}
 
           {/* Workflow Status */}
-          {workflowId && <WorkflowStatus workflowId={workflowId} onComplete={handleWorkflowComplete} />}
+          {workflowId && (
+            <WorkflowStatus workflowId={workflowId} onComplete={handleWorkflowComplete} fileName={uploadedFileName} />
+          )}
 
           {/* Artifacts Download Section */}
           {artifacts.length > 0 && (
@@ -395,22 +488,17 @@ export default function PyToExeConverter() {
       </Card>
 
       <p className="mt-8 text-center text-sm text-muted-foreground">
-        This tool uploads Python files to GitHub repository and converts them to executable files.
+        This tool uploads Python files to your GitHub repository and converts them to executable files.
       </p>
-
-      <p></p>
-      
-      <p className="mt-8 text-center text-sm text-muted-foreground">
-        The file is uploaded to <a href="https://github.com/eroge69/PyToExe/tree/main/python-files" target="_blank"><b> THIS REPOSITORY</b></a>
-      </p>
-
-      <p></p>
 
       <p className="mt-8 text-center text-sm text-muted-foreground">
-        <a href="https://github.com/eroge69/" target="_blank"><b> UNAMED666</b></a>
-
-
+        The file is uploaded to{" "}
+        <a href="https://github.com/eroge69/PyToExe/tree/main/python-files" target="_blank" rel="noopener noreferrer">
+          <b> THIS REPOSITORY</b>
+        </a>
       </p>
+
+     
     </div>
   )
 }
