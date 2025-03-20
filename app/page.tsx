@@ -110,7 +110,7 @@ function WorkflowStatus({
     checkStatus()
 
     // Set up polling interval (every 5 seconds)
-    intervalId = setInterval(checkStatus, 5000)
+    intervalId = setInterval(checkStatus, 2000)
 
     // Clean up interval on unmount
     return () => clearInterval(intervalId)
