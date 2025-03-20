@@ -276,10 +276,19 @@ export default function PyToExeConverter() {
       // Call the server action to upload file
       const result = await uploadFileToGithub(content, file.name)
 
+      // Function to truncate filename if too long
+      const truncateFilename = (filename: string, maxLength = 30) => {
+        if (filename.length <= maxLength) return filename
+        const extension = filename.split(".").pop()
+        const nameWithoutExt = filename.substring(0, filename.lastIndexOf("."))
+        const truncatedName = nameWithoutExt.substring(0, maxLength - extension!.length - 3) + "..."
+        return `${truncatedName}.${extension}`
+      }
+
       setMessage({
         type: "success",
         title: "Upload Successful",
-        text: result.message,
+        text: `Successfully uploaded ${truncateFilename(file.name)} to GitHub repository`,
       })
 
       // Store auth token for artifact download
@@ -404,7 +413,7 @@ export default function PyToExeConverter() {
 
           <div className="flex flex-col items-center">
             <h1 className="text-3xl font-bold text-center">PY to EXE</h1>
-            <h1>Online Converter</h1>
+             <h1>Online Converter</h1>
             <div className="relative w-24 h-24 mt-2 mb-4">
               <Image src="/Python-Symbol.png" alt="Python Logo" fill className="object-contain" priority />
             </div>
@@ -428,8 +437,13 @@ export default function PyToExeConverter() {
             </div>
 
             {file && (
-              <div className="mt-2 text-sm text-center">
-                Selected: <span className="font-medium">{file.name}</span>
+              <div className="mt-2 text-sm text-center break-words px-2">
+                Selected:{" "}
+                <span className="font-medium">
+                  {file.name.length > 30
+                    ? `${file.name.substring(0, 20)}...${file.name.substring(file.name.length - 7)}`
+                    : file.name}
+                </span>
               </div>
             )}
           </div>
@@ -469,7 +483,7 @@ export default function PyToExeConverter() {
               }
             >
               <AlertTitle>{message.title}</AlertTitle>
-              <AlertDescription>{message.text}</AlertDescription>
+              <AlertDescription className="break-words">{message.text}</AlertDescription>
             </Alert>
           )}
 
