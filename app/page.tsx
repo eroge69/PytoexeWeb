@@ -52,7 +52,7 @@ function WorkflowStatus({
   useEffect(() => {
     let intervalId: NodeJS.Timeout
     let attempts = 0
-    const maxAttempts = 60 // 5 minutes (5s intervals)
+    const maxAttempts = 6000 // 5 minutes (5s intervals)
 
     const checkStatus = async () => {
       try {
@@ -109,8 +109,8 @@ function WorkflowStatus({
     // Initial check
     checkStatus()
 
-    // Set up polling interval (every 0.5 seconds)
-    intervalId = setInterval(checkStatus, 500)
+    // Set up polling interval (every 2 seconds)
+    intervalId = setInterval(checkStatus, 2000)
 
     // Clean up interval on unmount
     return () => clearInterval(intervalId)
