@@ -15,9 +15,9 @@ import {
   XCircle,
   Clock,
   RefreshCw,
-  Trash2,
   Code,
   Shield,
+  Trash2,
 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
@@ -27,7 +27,6 @@ import {
   checkWorkflowStatus,
   getWorkflowArtifacts,
   getArtifactDownloadUrl,
-  deleteFileFromGithub,
   getGitHubUserInfo,
 } from "./actions"
 
@@ -46,13 +45,12 @@ function WorkflowStatus({
   const [conclusion, setConclusion] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState<boolean>(false)
-  const [fileDeleted, setFileDeleted] = useState<boolean>(false)
 
   // Poll for workflow status updates
   useEffect(() => {
     let intervalId: NodeJS.Timeout
     let attempts = 0
-    const maxAttempts = 6000 // 5 minutes (5s intervals)
+    const maxAttempts = 60 // 5 minutes (5s intervals)
 
     const checkStatus = async () => {
       try {
@@ -69,17 +67,6 @@ function WorkflowStatus({
           if (workflowData.conclusion === "success") {
             const artifacts = await getWorkflowArtifacts(workflowId)
             onComplete(artifacts)
-
-            // Delete the Python file after successful workflow
-            if (!fileDeleted && fileName) {
-              try {
-                await deleteFileFromGithub(fileName)
-                setFileDeleted(true)
-                console.log(`Successfully deleted ${fileName}`)
-              } catch (error) {
-                console.error(`Error deleting file ${fileName}:`, error)
-              }
-            }
           }
 
           // Clear interval when completed
@@ -109,12 +96,12 @@ function WorkflowStatus({
     // Initial check
     checkStatus()
 
-    // Set up polling interval (every 1 seconds)
-    intervalId = setInterval(checkStatus, 1000)
+    // Set up polling interval (every 2 seconds)
+    intervalId = setInterval(checkStatus, 2000)
 
     // Clean up interval on unmount
     return () => clearInterval(intervalId)
-  }, [workflowId, onComplete, fileName, fileDeleted])
+  }, [workflowId, onComplete, fileName])
 
   // Status indicator
   const getStatusIndicator = () => {
@@ -153,17 +140,6 @@ function WorkflowStatus({
       if (workflowData.status === "completed" && workflowData.conclusion === "success") {
         const artifacts = await getWorkflowArtifacts(workflowId!)
         onComplete(artifacts)
-
-        // Delete the Python file after successful workflow
-        if (!fileDeleted && fileName) {
-          try {
-            await deleteFileFromGithub(fileName)
-            setFileDeleted(true)
-            console.log(`Successfully deleted ${fileName}`)
-          } catch (error) {
-            console.error(`Error deleting file ${fileName}:`, error)
-          }
-        }
       }
     } catch (error) {
       console.error("Error refreshing workflow status:", error)
@@ -189,12 +165,6 @@ function WorkflowStatus({
 
       <div className="flex justify-between items-center">
         <div className="text-xs text-muted-foreground">Workflow ID: {workflowId}</div>
-        {fileDeleted && (
-          <div className="text-xs flex items-center text-green-500">
-            <Trash2 className="h-3 w-3 mr-1" />
-            Python file deleted
-          </div>
-        )}
       </div>
 
       {error && <div className="mt-2 text-xs text-red-500">{error}</div>}
@@ -298,7 +268,7 @@ export default function PyToExeConverter() {
 
       // Wait 4 seconds before checking workflow
       setProcessingStep("waiting")
-      await new Promise((resolve) => setTimeout(resolve, 5000))
+      await new Promise((resolve) => setTimeout(resolve, 4000))
 
       // Get latest workflow run
       setProcessingStep("checking_workflow")
@@ -446,6 +416,13 @@ export default function PyToExeConverter() {
                 </span>
               </div>
             )}
+
+            <div className="mt-2 text-xs text-center text-muted-foreground">
+              <div className="flex items-center justify-center gap-1">
+                <Trash2 className="h-3 w-3" />
+                <span>File Python akan dihapus dari repositori setelah proses konversi selesai</span>
+              </div>
+            </div>
           </div>
 
           <Button
@@ -629,3 +606,4 @@ export default function PyToExeConverter() {
     </div>
   )
 }
+
