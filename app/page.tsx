@@ -420,7 +420,7 @@ export default function PyToExeConverter() {
             <div className="mt-2 text-xs text-center text-muted-foreground">
               <div className="flex items-center justify-center gap-1">
                 <Trash2 className="h-3 w-3" />
-                <span>File Python akan dihapus dari repositori setelah proses konversi selesai</span>
+                <span>PY files will be removed from repo after process</span>
               </div>
             </div>
           </div>
