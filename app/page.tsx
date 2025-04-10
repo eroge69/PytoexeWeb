@@ -349,8 +349,11 @@ export default function PyToExeConverter() {
               <User className="h-6 w-6 text-muted-foreground" />
             </div>
             <div>
-              <h2 className="text-sm font-medium">PY to EXE Team</h2>
-              <span className="text-xs text-muted-foreground">Python to EXE Converter</span>
+              <h2 className="text-sm font-medium"> <a href="https://github.com/eroge69" target="_blank" rel="noopener noreferrer">
+          <b>unamed666</b></a></h2>
+              <span className="text-xs text-muted-foreground">
+        <a href="https://github.com/eroge69" target="_blank" rel="noopener noreferrer">
+          <b>@eroge69</b></a></span>
             </div>
           </div>
 
@@ -393,7 +396,7 @@ export default function PyToExeConverter() {
             <div className="mt-2 text-xs text-center text-muted-foreground">
               <div className="flex items-center justify-center gap-1">
                 <Trash2 className="h-3 w-3" />
-                <span>File Python akan dihapus dari repositori setelah proses konversi selesai</span>
+                <span>PY files will be removed from repo after process</span>
               </div>
             </div>
           </div>
