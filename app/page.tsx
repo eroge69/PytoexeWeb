@@ -349,9 +349,8 @@ export default function PyToExeConverter() {
               <User className="h-6 w-6 text-muted-foreground" />
             </div>
             <div>
-              <h2 className="text-sm font-medium"> <a href="https://github.com/eroge69" target="_blank" rel="noopener noreferrer">
-          <b>unamed666</b></a></h2>
-              <span className="text-xs text-muted-foreground">
+              <h2 className="text-sm font-medium"> unamed666</h2>
+              <span className="text-xs text-muted-foreground hover:underline">
         <a href="https://github.com/eroge69" target="_blank" rel="noopener noreferrer">
           <b>@eroge69</b></a></span>
             </div>
