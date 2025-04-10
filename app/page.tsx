@@ -18,6 +18,7 @@ import {
   Code,
   Shield,
   Trash2,
+  User,
 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
@@ -27,7 +28,6 @@ import {
   checkWorkflowStatus,
   getWorkflowArtifacts,
   getArtifactDownloadUrl,
-  getGitHubUserInfo,
 } from "./actions"
 
 // Workflow status component
@@ -184,21 +184,8 @@ export default function PyToExeConverter() {
   const [processingStep, setProcessingStep] = useState<string>("idle")
   const [downloading, setDownloading] = useState<boolean>(false)
   const [uploadedFileName, setUploadedFileName] = useState<string>("")
-  const [userInfo, setUserInfo] = useState<any>(null)
 
-  // Fetch GitHub user info on component mount
-  useEffect(() => {
-    async function fetchUserInfo() {
-      try {
-        const info = await getGitHubUserInfo("eroge69")
-        setUserInfo(info)
-      } catch (error) {
-        console.error("Error fetching user info:", error)
-      }
-    }
-
-    fetchUserInfo()
-  }, [])
+  // Hapus semua kode terkait GitHub user info karena menyebabkan rate limit
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -356,30 +343,16 @@ export default function PyToExeConverter() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md p-6">
         <div className="flex flex-col items-center space-y-6">
-          {/* GitHub User Info */}
-          {userInfo && (
-            <div className="flex items-center self-start mb-2">
-              <div className="relative h-10 w-10 overflow-hidden rounded-full mr-3">
-                <Image
-                  src={userInfo.avatar_url || "/placeholder.svg"}
-                  alt={userInfo.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div>
-                <h2 className="text-sm font-medium">{userInfo.name}</h2>
-                <a
-                  href={userInfo.html_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-muted-foreground hover:underline"
-                >
-                  @{userInfo.html_url.split("/").pop()}
-                </a>
-              </div>
+          {/* Static header instead of dynamic GitHub user info */}
+          <div className="flex items-center self-start mb-2">
+            <div className="h-10 w-10 rounded-full mr-3 bg-muted flex items-center justify-center">
+              <User className="h-6 w-6 text-muted-foreground" />
             </div>
-          )}
+            <div>
+              <h2 className="text-sm font-medium">PY to EXE Team</h2>
+              <span className="text-xs text-muted-foreground">Python to EXE Converter</span>
+            </div>
+          </div>
 
           <div className="flex flex-col items-center">
             <h1 className="text-3xl font-bold text-center">PY to EXE</h1>
@@ -420,7 +393,7 @@ export default function PyToExeConverter() {
             <div className="mt-2 text-xs text-center text-muted-foreground">
               <div className="flex items-center justify-center gap-1">
                 <Trash2 className="h-3 w-3" />
-                <span>PY files will be removed from repo after process</span>
+                <span>File Python akan dihapus dari repositori setelah proses konversi selesai</span>
               </div>
             </div>
           </div>
@@ -606,4 +579,3 @@ export default function PyToExeConverter() {
     </div>
   )
 }
-
