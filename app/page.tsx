@@ -345,8 +345,13 @@ export default function PyToExeConverter() {
         <div className="flex flex-col items-center space-y-6">
           {/* Static header instead of dynamic GitHub user info */}
           <div className="flex items-center self-start mb-2">
-            <div className="h-10 w-10 rounded-full mr-3 bg-muted flex items-center justify-center">
-              <User className="h-6 w-6 text-muted-foreground" />
+            <div className="relative h-10 w-10 overflow-hidden rounded-full mr-3">
+              <Image
+                src="https://avatars.githubusercontent.com/u/52182376?v=4"
+                alt="PY to EXE Team"
+                fill
+                className="object-cover"
+              />
             </div>
             <div>
               <h2 className="text-sm font-medium"> unamed666</h2>
