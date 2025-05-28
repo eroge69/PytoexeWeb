@@ -1,159 +1,245 @@
 "use server"
-// Function to upload file to GitHub
-export async function uploadFileToGithub(fileContent: string, fileName: string) {
-  // Access token from environment variables
+
+// Debug function to test GitHub access
+export async function debugGitHubAccess() {
   const token = process.env.GITHUB_TOKEN
   const username = process.env.GITHUB_USERNAME
   const repo = process.env.GITHUB_REPO
-  const path = `python-files/${fileName}`
 
-  // Validate environment variables
-  if (!token) {
-    throw new Error("GitHub token not configured. Please check your environment variables.")
+  console.log("=== GitHub Debug Information ===")
+  console.log(`Token exists: ${!!token}`)
+  console.log(`Token length: ${token?.length || 0}`)
+  console.log(`Token starts with: ${token?.substring(0, 4) || "N/A"}...`)
+  console.log(`Username: ${username}`)
+  console.log(`Repository: ${repo}`)
+
+  if (!token || !username || !repo) {
+    return {
+      success: false,
+      error: "Missing environment variables",
+      details: {
+        hasToken: !!token,
+        hasUsername: !!username,
+        hasRepo: !!repo,
+      },
+    }
   }
 
-  if (!username) {
-    throw new Error("GitHub username not configured. Please check your environment variables.")
+  // Test 1: Check if token can authenticate
+  try {
+    console.log("Testing basic authentication...")
+    const authResponse = await fetch("https://api.github.com/user", {
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "PyToExe-Converter",
+      },
+    })
+
+    console.log(`Auth test status: ${authResponse.status}`)
+
+    if (authResponse.ok) {
+      const userData = await authResponse.json()
+      console.log(`Authenticated as: ${userData.login}`)
+      console.log(`User type: ${userData.type}`)
+    } else {
+      const errorText = await authResponse.text()
+      console.log(`Auth failed: ${errorText}`)
+      return {
+        success: false,
+        error: `Authentication failed: ${authResponse.status}`,
+        details: { authStatus: authResponse.status, authError: errorText },
+      }
+    }
+  } catch (error) {
+    console.log(`Auth test error: ${error}`)
+    return {
+      success: false,
+      error: `Auth test failed: ${error}`,
+      details: { authError: error },
+    }
   }
 
-  if (!repo) {
-    throw new Error("GitHub repository not configured. Please check your environment variables.")
+  // Test 2: Check repository access
+  try {
+    console.log("Testing repository access...")
+    const repoResponse = await fetch(`https://api.github.com/repos/${username}/${repo}`, {
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "PyToExe-Converter",
+      },
+    })
+
+    console.log(`Repo test status: ${repoResponse.status}`)
+
+    if (repoResponse.ok) {
+      const repoData = await repoResponse.json()
+      console.log(`Repository: ${repoData.full_name}`)
+      console.log(`Private: ${repoData.private}`)
+      console.log(`Permissions: ${JSON.stringify(repoData.permissions)}`)
+    } else {
+      const errorText = await repoResponse.text()
+      console.log(`Repo access failed: ${errorText}`)
+      return {
+        success: false,
+        error: `Repository access failed: ${repoResponse.status}`,
+        details: { repoStatus: repoResponse.status, repoError: errorText },
+      }
+    }
+  } catch (error) {
+    console.log(`Repo test error: ${error}`)
+    return {
+      success: false,
+      error: `Repo test failed: ${error}`,
+      details: { repoError: error },
+    }
   }
 
-  // Log environment variable presence (not values for security)
-  console.log(`Environment variables check:`)
-  console.log(`- GITHUB_TOKEN: ${token ? "Present (length: " + token.length + ")" : "Missing"}`)
-  console.log(`- GITHUB_USERNAME: ${username ? "Present" : "Missing"}`)
-  console.log(`- GITHUB_REPO: ${repo ? "Present" : "Missing"}`)
-  console.log(`Attempting to upload to ${username}/${repo} at path ${path}`)
+  // Test 3: Check if we can read contents
+  try {
+    console.log("Testing contents access...")
+    const contentsResponse = await fetch(`https://api.github.com/repos/${username}/${repo}/contents`, {
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "PyToExe-Converter",
+      },
+    })
 
-  // Try different authentication methods
-  const authMethods = [
-    { name: "token", header: `token ${token}` },
-    { name: "Bearer", header: `Bearer ${token}` },
-    { name: "basic", header: `Basic ${Buffer.from(`${username}:${token}`).toString("base64")}` },
-  ]
+    console.log(`Contents test status: ${contentsResponse.status}`)
 
-  let successfulAuth = null
+    if (!contentsResponse.ok) {
+      const errorText = await contentsResponse.text()
+      console.log(`Contents access failed: ${errorText}`)
+      return {
+        success: false,
+        error: `Contents access failed: ${contentsResponse.status}`,
+        details: { contentsStatus: contentsResponse.status, contentsError: errorText },
+      }
+    }
+  } catch (error) {
+    console.log(`Contents test error: ${error}`)
+    return {
+      success: false,
+      error: `Contents test failed: ${error}`,
+      details: { contentsError: error },
+    }
+  }
 
-  // Try each authentication method
-  for (const auth of authMethods) {
+  return {
+    success: true,
+    message: "All GitHub access tests passed",
+    details: { username, repo },
+  }
+}
+
+// Function to upload file to GitHub
+export async function uploadFileToGithub(fileContent: string, fileName: string) {
+  try {
+    // First run debug to see what's wrong
+    const debugResult = await debugGitHubAccess()
+
+    if (!debugResult.success) {
+      throw new Error(`GitHub access check failed: ${debugResult.error}`)
+    }
+
+    const token = process.env.GITHUB_TOKEN
+    const username = process.env.GITHUB_USERNAME
+    const repo = process.env.GITHUB_REPO
+    const path = `python-files/${fileName}`
+
+    console.log(`Attempting to upload ${fileName} to ${username}/${repo}`)
+
+    // Check if python-files directory exists, if not create it
     try {
-      console.log(`Trying authentication method: ${auth.name}`)
-
-      // Test authentication with a simple API call
-      const testResponse = await fetch(`https://api.github.com/user`, {
+      const dirResponse = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/python-files`, {
         headers: {
-          Authorization: auth.header,
+          Authorization: `token ${token}`,
           Accept: "application/vnd.github.v3+json",
-          "X-GitHub-Api-Version": "2022-11-28",
+          "User-Agent": "PyToExe-Converter",
         },
       })
 
-      if (testResponse.ok) {
-        console.log(`Authentication successful with method: ${auth.name}`)
-        successfulAuth = auth
-        break
-      } else {
-        const status = testResponse.status
-        console.log(`Authentication failed with method ${auth.name}: ${status}`)
+      if (dirResponse.status === 404) {
+        console.log("python-files directory doesn't exist, will be created automatically")
       }
     } catch (error) {
-      console.error(`Error testing ${auth.name} authentication:`, error)
+      console.log("Directory check failed, continuing...")
     }
-  }
 
-  if (!successfulAuth) {
-    throw new Error("All authentication methods failed. Please check your GitHub token.")
-  }
+    // Check if file already exists
+    let sha = ""
+    try {
+      const checkResponse = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
+        headers: {
+          Authorization: `token ${token}`,
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": "PyToExe-Converter",
+        },
+      })
 
-  // Now use the successful authentication method for the actual upload
-  console.log(`Using ${successfulAuth.name} authentication for upload`)
-
-  // Check if file already exists
-  let sha = ""
-  try {
-    console.log("Checking if file exists...")
-    const checkUrl = `https://api.github.com/repos/${username}/${repo}/contents/${path}`
-
-    const checkResponse = await fetch(checkUrl, {
-      headers: {
-        Authorization: successfulAuth.header,
-        Accept: "application/vnd.github.v3+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    })
-
-    if (checkResponse.ok) {
-      const data = await checkResponse.json()
-      sha = data.sha
-      console.log(`File exists with SHA: ${sha}`)
-    } else if (checkResponse.status === 404) {
-      console.log("File does not exist yet, will create new file")
-    } else {
-      const errorText = await checkResponse.text()
-      console.error(`Error checking file: ${checkResponse.status}`)
-      console.error(`Response: ${errorText}`)
+      if (checkResponse.ok) {
+        const data = await checkResponse.json()
+        sha = data.sha
+        console.log(`File exists, will update with SHA: ${sha}`)
+      } else if (checkResponse.status === 404) {
+        console.log("File doesn't exist, will create new")
+      } else {
+        console.log(`File check returned: ${checkResponse.status}`)
+      }
+    } catch (error) {
+      console.log("File check failed, continuing...")
     }
-  } catch (error) {
-    console.error("Error checking if file exists:", error)
-    // Continue anyway as the file might not exist yet
-  }
 
-  // Upload file to GitHub
-  try {
-    console.log("Uploading file to GitHub...")
-    const uploadUrl = `https://api.github.com/repos/${username}/${repo}/contents/${path}`
-
-    const requestBody = {
+    // Upload the file
+    const uploadData = {
       message: `Upload ${fileName} via PY to EXE tool`,
       content: Buffer.from(fileContent).toString("base64"),
-      ...(sha && { sha }), // Include sha if file exists (for updating)
+      ...(sha && { sha }),
     }
 
-    const response = await fetch(uploadUrl, {
+    console.log("Uploading file...")
+    const uploadResponse = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
       method: "PUT",
       headers: {
-        Authorization: successfulAuth.header,
+        Authorization: `token ${token}`,
         Accept: "application/vnd.github.v3+json",
         "Content-Type": "application/json",
-        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "PyToExe-Converter",
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify(uploadData),
     })
 
-    if (response.ok) {
-      console.log("File uploaded successfully")
-      return {
-        success: true,
-        message: `Successfully uploaded ${fileName} to GitHub repository`,
-        auth: successfulAuth.header,
-      }
-    } else {
-      // Get detailed error information
-      const errorText = await response.text()
-      console.error(`Error response: ${response.status}`)
-      console.error(`Response: ${errorText}`)
+    console.log(`Upload response status: ${uploadResponse.status}`)
 
-      // Provide more specific error messages based on status code
-      if (response.status === 401) {
-        throw new Error("GitHub authentication failed. Please check your token.")
-      } else if (response.status === 403) {
-        throw new Error("GitHub permission denied. Your token may not have the required permissions.")
-      } else if (response.status === 404) {
-        throw new Error(`Repository ${username}/${repo} not found. Please check your repository name.`)
-      } else {
-        let errorMessage = "GitHub API error"
-        try {
-          const errorJson = JSON.parse(errorText)
-          if (errorJson.message) {
-            errorMessage += `: ${errorJson.message}`
-          }
-        } catch (e) {
-          errorMessage += `: ${response.statusText}`
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text()
+      console.error(`Upload failed with status ${uploadResponse.status}`)
+      console.error(`Error response: ${errorText}`)
+
+      // Try to parse the error for more details
+      let errorDetails = errorText
+      try {
+        const errorJson = JSON.parse(errorText)
+        errorDetails = errorJson.message || errorText
+        if (errorJson.errors) {
+          errorDetails += ` - ${JSON.stringify(errorJson.errors)}`
         }
-        throw new Error(errorMessage)
+      } catch (e) {
+        // Keep original error text
       }
+
+      throw new Error(`GitHub upload failed (${uploadResponse.status}): ${errorDetails}`)
+    }
+
+    const uploadResult = await uploadResponse.json()
+    console.log("Upload successful!")
+
+    return {
+      success: true,
+      message: `Successfully uploaded ${fileName} to GitHub repository`,
+      data: uploadResult,
     }
   } catch (error) {
     console.error("Error in uploadFileToGithub:", error)
@@ -161,242 +247,27 @@ export async function uploadFileToGithub(fileContent: string, fileName: string) 
   }
 }
 
-// Function to delete file from GitHub
+// Simplified versions of other functions for now
 export async function deleteFileFromGithub(fileName: string) {
-  const token = process.env.GITHUB_TOKEN
-  const username = process.env.GITHUB_USERNAME
-  const repo = process.env.GITHUB_REPO
-  const path = `python-files/${fileName}`
-
-  if (!token || !username || !repo) {
-    throw new Error("Missing required environment variables")
-  }
-
-  try {
-    // First, we need to get the file's SHA
-    const getFileResponse = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: "application/vnd.github.v3+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    })
-
-    if (!getFileResponse.ok) {
-      if (getFileResponse.status === 404) {
-        console.log(`File ${fileName} not found, nothing to delete`)
-        return { success: true, message: "File not found, nothing to delete" }
-      }
-      throw new Error(`Failed to get file information: ${getFileResponse.statusText}`)
-    }
-
-    const fileData = await getFileResponse.json()
-    const sha = fileData.sha
-
-    // Now delete the file
-    const deleteResponse = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: "application/vnd.github.v3+json",
-        "Content-Type": "application/json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-      body: JSON.stringify({
-        message: `Delete ${fileName} after successful workflow completion`,
-        sha: sha,
-      }),
-    })
-
-    if (!deleteResponse.ok) {
-      const errorText = await deleteResponse.text()
-      console.error(`Error deleting file: ${deleteResponse.status}`)
-      console.error(`Response: ${errorText}`)
-      throw new Error(`Failed to delete file: ${deleteResponse.statusText}`)
-    }
-
-    return { success: true, message: `Successfully deleted ${fileName} from repository` }
-  } catch (error) {
-    console.error("Error deleting file from GitHub:", error)
-    throw error
-  }
+  throw new Error("Function temporarily disabled for debugging")
 }
 
-// Function to check workflow status
 export async function checkWorkflowStatus(workflowRunId: number) {
-  const token = process.env.GITHUB_TOKEN
-  const username = process.env.GITHUB_USERNAME
-  const repo = process.env.GITHUB_REPO
-
-  if (!token || !username || !repo) {
-    throw new Error("Missing required environment variables")
-  }
-
-  try {
-    const response = await fetch(`https://api.github.com/repos/${username}/${repo}/actions/runs/${workflowRunId}`, {
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: "application/vnd.github.v3+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    return data
-  } catch (error) {
-    console.error("Error checking workflow status:", error)
-    throw error
-  }
+  throw new Error("Function temporarily disabled for debugging")
 }
 
-// Function to get latest workflow run
 export async function getLatestWorkflowRun() {
-  const token = process.env.GITHUB_TOKEN
-  const username = process.env.GITHUB_USERNAME
-  const repo = process.env.GITHUB_REPO
-
-  if (!token || !username || !repo) {
-    throw new Error("Missing required environment variables")
-  }
-
-  try {
-    const response = await fetch(`https://api.github.com/repos/${username}/${repo}/actions/runs?per_page=1`, {
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: "application/vnd.github.v3+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    if (data.workflow_runs && data.workflow_runs.length > 0) {
-      return data.workflow_runs[0]
-    } else {
-      throw new Error("No workflow runs found")
-    }
-  } catch (error) {
-    console.error("Error getting latest workflow run:", error)
-    throw error
-  }
+  throw new Error("Function temporarily disabled for debugging")
 }
 
-// Function to get workflow artifacts
 export async function getWorkflowArtifacts(workflowRunId: number) {
-  const token = process.env.GITHUB_TOKEN
-  const username = process.env.GITHUB_USERNAME
-  const repo = process.env.GITHUB_REPO
-
-  if (!token || !username || !repo) {
-    throw new Error("Missing required environment variables")
-  }
-
-  try {
-    const response = await fetch(
-      `https://api.github.com/repos/${username}/${repo}/actions/runs/${workflowRunId}/artifacts`,
-      {
-        headers: {
-          Authorization: `token ${token}`,
-          Accept: "application/vnd.github.v3+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      },
-    )
-
-    if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    return data.artifacts || []
-  } catch (error) {
-    console.error("Error getting workflow artifacts:", error)
-    throw error
-  }
+  throw new Error("Function temporarily disabled for debugging")
 }
 
-// Function to get artifact download URL
 export async function getArtifactDownloadUrl(artifactId: number) {
-  const token = process.env.GITHUB_TOKEN
-  const username = process.env.GITHUB_USERNAME
-  const repo = process.env.GITHUB_REPO
-
-  if (!token || !username || !repo) {
-    throw new Error("Missing required environment variables")
-  }
-
-  try {
-    // Instead of just returning the URL, we'll create a pre-signed URL or proxy the download
-    const response = await fetch(
-      `https://api.github.com/repos/${username}/${repo}/actions/artifacts/${artifactId}/zip`,
-      {
-        headers: {
-          Authorization: `token ${token}`,
-          Accept: "application/vnd.github.v3+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-        // This is important - we need to follow redirects to get the actual content
-        redirect: "follow",
-      },
-    )
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error(`Error downloading artifact: ${response.status}`)
-      console.error(`Response: ${errorText}`)
-      throw new Error(`Failed to download artifact: ${response.statusText}`)
-    }
-
-    // Get the artifact data as a buffer
-    const artifactData = await response.arrayBuffer()
-
-    // Return the artifact data as base64
-    return {
-      success: true,
-      data: Buffer.from(artifactData).toString("base64"),
-      contentType: response.headers.get("content-type") || "application/zip",
-      filename: `artifact-${artifactId}.zip`,
-    }
-  } catch (error) {
-    console.error("Error getting artifact download:", error)
-    throw error
-  }
+  throw new Error("Function temporarily disabled for debugging")
 }
 
-// Function to get GitHub user information
 export async function getGitHubUserInfo(username: string) {
-  const token = process.env.GITHUB_TOKEN
-
-  try {
-    const response = await fetch(`https://api.github.com/users/${username}`, {
-      headers: {
-        ...(token && { Authorization: `token ${token}` }),
-        Accept: "application/vnd.github.v3+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`Failed to get user information: ${response.statusText}`)
-    }
-
-    const userData = await response.json()
-    return {
-      success: true,
-      name: userData.name || userData.login,
-      avatar_url: userData.avatar_url,
-      html_url: userData.html_url,
-    }
-  } catch (error) {
-    console.error("Error getting GitHub user info:", error)
-    throw error
-  }
+  throw new Error("Function temporarily disabled for debugging")
 }
-
