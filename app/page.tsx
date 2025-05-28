@@ -491,7 +491,7 @@ export default function PyToExeConverter() {
             Web Interface Repository
           </a>
           <a
-            href="https://github.com/eroge69/PyToExe"
+            href="https://github.com/eroge-69/PyToExe"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-sm text-primary hover:underline"
