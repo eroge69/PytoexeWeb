@@ -1,5 +1,4 @@
 "use server"
-
 // Function to upload file to GitHub
 export async function uploadFileToGithub(fileContent: string, fileName: string) {
   // Access token from environment variables
