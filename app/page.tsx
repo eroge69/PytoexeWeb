@@ -360,8 +360,14 @@ export default function PyToExeConverter() {
         <div className="flex flex-col items-center space-y-6">
           {/* Static header instead of dynamic GitHub user info */}
           <div className="flex items-center self-start mb-2">
-            <div className="h-10 w-10 rounded-full mr-3 bg-muted flex items-center justify-center">
-              <User className="h-6 w-6 text-muted-foreground" />
+            <div className="h-10 w-10 rounded-full mr-3 overflow-hidden">
+              <Image
+                src="https://github.com/eroge69.png"
+                alt="GitHub Avatar"
+                width={40}
+                height={40}
+                className="object-cover"
+              />
             </div>
             <div>
               <h2 className="text-sm font-medium"> unamed666</h2>
